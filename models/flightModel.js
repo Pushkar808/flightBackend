@@ -1,4 +1,6 @@
+const sendMail = require('../config/nodeMailer');
 const flightSchema = require('../schema/flightSchema');
+const { flightStatusAction } = require('../utils/helper');
 
 class FlightModel {
     async addData(req, res) {
@@ -52,6 +54,74 @@ class FlightModel {
             });
         }
     }
+    async changeFlightStatus(req, res) {
+        try {
+            const { type, flight_id, gateType, timeType, value } = req.body;
+            if (!type || !flight_id) {
+                throw new Error("Type or Flight ID not defined");
+            }
+
+            const updateFields = {
+                gate: {
+                    arrival: "arrival_gate",
+                    departure: "departure_gate"
+                },
+                time: {
+                    arrival: "actual_arrival",
+                    departure: "actual_departure"
+                },
+                status: "status"
+            };
+
+            let updateKey;
+
+            switch (type) {
+                case "gate":
+                    if (!gateType || !updateFields.gate[gateType]) {
+                        throw new Error("Invalid Gate Type");
+                    }
+                    updateKey = updateFields.gate[gateType];
+                    break;
+                case "time":
+                    if (!timeType || !updateFields.time[timeType]) {
+                        throw new Error("Invalid Time Type");
+                    }
+                    updateKey = updateFields.time[timeType];
+                    break;
+                case "status":
+                    updateKey = updateFields.status;
+                    break;
+                default:
+                    throw new Error("Invalid Type");
+            }
+
+            const updateValue = { [updateKey]: value };
+            const result = await flightSchema.updateOne({ flight_id }, { $set: updateValue });
+
+            if (result?.matchedCount === 0)
+                throw "No flight Found with this Id"
+            if (!result?.acknowledged)
+                throw "Some Error Occurred! While updating"
+
+            const flightData = await flightSchema?.findOne({ flight_id: flight_id });
+            flightStatusAction( flightData, req.body);
+
+            return res.status(200).json({
+                status: true,
+                message: "Flight status updated successfully",
+                data: result
+            });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({
+                status: false,
+                message: "Internal Server Error",
+                data: error
+            });
+        }
+    }
+
+
 }
 
 module.exports = new FlightModel(); 
