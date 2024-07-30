@@ -1,16 +1,16 @@
 const nodemailer = require('nodemailer');
 const sendMail = (receiverMail, mailSubject, htmlBody) => {
     try {
-        // Create a transporter object using the default SMTP transport
+        //SMTP transporter for sending mail
         const transporter = nodemailer.createTransport({
-            service: 'gmail', // or another email service
+            service: 'gmail',
             auth: {
-                user: 'pushkargupta808@gmail.com', // your email
-                pass: 'yqjr npuk ekla tzli'   // your email password or app password
+                user: process.env.MAILER_MAIL,
+                pass: process.env.APP_PASSWORD
             }
         });
         const mailOptions = {
-            from: 'pushkargupta808@gmail.com',
+            from: process.env.MAILER_MAIL,
             to: receiverMail,
             subject: mailSubject,
             html: htmlBody

@@ -1,4 +1,3 @@
-const sendMail = require('../config/nodeMailer');
 const flightSchema = require('../schema/flightSchema');
 const { flightStatusAction } = require('../utils/helper');
 
@@ -30,7 +29,6 @@ class FlightModel {
     }
     async getFlightInfo(req, res) {
         try {
-            console.log(req);
             const { flightNumber = "" } = req?.query;
             if (flightNumber) {
                 const result = await flightSchema.find({ flight_id: { $regex: flightNumber, $options: 'i' } });
@@ -74,7 +72,7 @@ class FlightModel {
             };
 
             let updateKey;
-
+            //validating type received from the api
             switch (type) {
                 case "gate":
                     if (!gateType || !updateFields.gate[gateType]) {
@@ -94,18 +92,18 @@ class FlightModel {
                 default:
                     throw new Error("Invalid Type");
             }
-
             const updateValue = { [updateKey]: value };
-            const result = await flightSchema.updateOne({ flight_id }, { $set: updateValue });
 
+            //updating flight status 
+            const result = await flightSchema.updateOne({ flight_id }, { $set: updateValue });
             if (result?.matchedCount === 0)
                 throw "No flight Found with this Id"
             if (!result?.acknowledged)
                 throw "Some Error Occurred! While updating"
 
+            //getting updated flight data
             const flightData = await flightSchema?.findOne({ flight_id: flight_id });
-            flightStatusAction( flightData, req.body);
-
+            flightStatusAction(flightData, req.body);
             return res.status(200).json({
                 status: true,
                 message: "Flight status updated successfully",

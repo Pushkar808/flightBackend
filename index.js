@@ -1,9 +1,10 @@
-const database = require("./config/dbConfig");
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const http = require('http');
+require('dotenv').config();
 const flightRoute = require("./routes/flight");
+const mondoDb = require('./config/dbConfig')
 const { socketConnection } = require("./utils/socket");
 
 const app = express();
@@ -15,8 +16,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get("/", (req, res) => res.status(200).send('API Working Success'));
+
+//routes to redirect to paths
 app.use("/api/v1/flight", flightRoute);
 
+//initializing socket Connection
 socketConnection(server)
 
 app.use((err, req, res, next) => {
@@ -24,7 +28,8 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something went wrong!');
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3006;
+
 server.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });

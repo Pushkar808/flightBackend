@@ -1,15 +1,16 @@
-// someFile.js (where you need to use `io`)
-const { io } = require('..'); // Adjust the path to your server file
 const sendMail = require("../config/nodeMailer");
 const Notification = require('../schema/notificationSchema');
+const { htmlTemplate } = require('./mailTemplates');
 const { sendNotification } = require('./socket');
 const { v4 } = require('uuid');
 const flightStatusAction = (flightData, reqBody) => {
     const { type, flight_id, gateType, timeType, value } = reqBody;
+    //initial common data and title
     let notification_data = {
         title: `Change in ${type} of flight ${flight_id}`,
         flight_id: flight_id
     };
+    //making common messages for all kind of methods
     switch (type) {
         case "gate":
             notification_data.message = `Your flight ${flight_id} is on time. ${gateType} gate: ${value}.`;
@@ -34,18 +35,18 @@ const flightStatusAction = (flightData, reqBody) => {
     notiData.push({ ...notification_data, method: "Email", recipient: "pushkargupta808@gmail.com", timestamp: new Date(), notification_id: uuid })
     notiData.push({ ...notification_data, method: "SMS", recipient: "9876543210", timestamp: new Date(), notification_id: uuid })
     notiData.push({ ...notification_data, method: "App", recipient: "testApp_10001", timestamp: new Date(), notification_id: uuid })
+    //saving notification data sent
     if (notiData?.length !== 0)
         Notification.insertMany(notiData)
-
     notiData.map((data) => {
         if (data?.method === "Email")
-            sendMail(data?.recipient, data?.title, data?.message)
+            sendMail(data?.recipient, data?.title, htmlTemplate(flightData))
         // else if (data?.method === "SMS")
+        //SMS condiotion goes here
+        //sending Notification via sockets to the frontend
         else if (data?.method === "App")
             sendNotification({ ...data, status: true })
     })
-    // sendMail("pushkargupta624@gmail.com", notification_data?.title, notification_data?.message);
-    // sendNotification(notification_data)
 }
 
 module.exports = {
