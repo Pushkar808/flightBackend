@@ -11,10 +11,9 @@ exports.socketConnection = (server) => {
         socket.on('disconnect', () => {
             console.info(`Client disconnected [id=${socket.id}]`);
         });
-        socket.broadcast.emit("message", "OK")
     });
 };
 
 exports.sendNotification = (notiObj) => {
-    connectedSocket.broadcast.emit("message", "OK")
+    connectedSocket.broadcast.emit("message", notiObj)
 }
